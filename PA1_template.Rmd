@@ -8,9 +8,36 @@ output:
 
 ## Loading and preprocessing the data
 
+```{r, include=TRUE, message=FALSE, results=FALSE, warning=FALSE}
+download.file("https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip", "Factivity.zip")
+unzip("Factivity.zip")
+factivity <-read.csv("activity.csv", header = TRUE)
+
+library(lubridate)
+factivity$date = ymd(factivity$date)
+```
+
 
 
 ## What is mean total number of steps taken per day?
+
+```{r, include=TRUE, message=FALSE, warning=FALSE}
+library(dplyr);
+factivitiy_clean = factivity[!is.na(factivity$steps),];
+
+sum_steps = factivitiy_clean %>% 
+  group_by(date) %>%
+summarize(steps = sum(steps)) %>%
+arrange(date);
+
+hist(sum_steps$steps)
+
+boxplot(sum_steps$steps)
+
+mean(sum_steps$steps)
+
+median(sum_steps$steps)
+```
 
 
 
