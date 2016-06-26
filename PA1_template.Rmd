@@ -9,10 +9,12 @@ output:
 ## Loading and preprocessing the data
 
 ```{r, include=TRUE, message=FALSE, results=FALSE, warning=FALSE}
+##load the data
 download.file("https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip", "Factivity.zip")
 unzip("Factivity.zip")
 factivity <-read.csv("activity.csv", header = TRUE)
 
+##type factivity$date as date-type
 library(lubridate)
 factivity$date = ymd(factivity$date)
 ```
@@ -22,9 +24,11 @@ factivity$date = ymd(factivity$date)
 ## What is mean total number of steps taken per day?
 
 ```{r, include=TRUE, message=FALSE, warning=FALSE}
+##eliminate NAs
 library(dplyr);
 factivitiy_clean = factivity[!is.na(factivity$steps),];
 
+##calc total steps per day
 sum_steps = factivitiy_clean %>% 
   group_by(date) %>%
 summarize(steps = sum(steps)) %>%
@@ -45,8 +49,66 @@ median(sum_steps$steps)
 
 
 
+```{r, include=TRUE, message=FALSE, warning=FALSE}
+##calc avg steps per interval
+avg_factivity = factivitiy_clean %>%
+group_by(interval) %>%
+summarize(avg_steps = mean(steps)) %>%
+arrange(interval);
+
+##plot
+library(ggplot2) 
+ggplot(avg_factivity, aes(interval, avg_steps)) + geom_line()
+
+##interval with max steps
+avg_factivity[avg_factivity$avg_steps == max(avg_factivity$avg_steps),]
+```
+
+
+
+
 ## Imputing missing values
 
+```{r, include=TRUE, message=FALSE, warning=FALSE}
+##number of NA-rows
+nrow(factivity[is.na(factivity$steps),])
+```
 
+```{r, include=TRUE, message=FALSE, warning=FALSE}
+##replace NAs with median
+factivity$steps[is.na(factivity$steps)] = mean(sum_steps$steps)
+```
+
+
+```{r, include=TRUE, message=FALSE, warning=FALSE}
+##histogramm and avgs evaluation
+hist(factivity$steps)
+
+median(factivity$steps)
+mean(factivity$steps)
+```
 
 ## Are there differences in activity patterns between weekdays and weekends?
+```{r, include=TRUE, message=FALSE, warning=FALSE}
+Sys.setlocale("LC_TIME", "English")
+
+##create factor variable
+factivity$day_type = factor(ifelse(weekdays(factivity$date) == "Sunday" | weekdays(factivity$date) == "Saturday", "weekend", "weekday")  ,c("weekend", "weekday"))
+
+##plot steps weekday vs weekend
+avg_weekday = factivity[factivity$day_type == "weekday",] %>%
+group_by(interval) %>%
+summarize(avg_steps = mean(steps)) %>%
+arrange(interval);
+
+
+avg_weekend = factivity[factivity$day_type == "weekend",] %>%
+group_by(interval) %>%
+summarize(avg_steps = mean(steps)) %>%
+arrange(interval);
+
+par(mfrow = c(2, 1), cex = 0.8)
+plot(avg_weekday$avg_steps, type = "l")
+plot(avg_weekend$avg_steps, type = "l")
+```
+
